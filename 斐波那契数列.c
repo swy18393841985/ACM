@@ -3,6 +3,7 @@ int main()
 {
     int result;
     int Fibonacci[46];
+    
     int i;
     for (i=0;i<46;i++){
         if(i==0){

@@ -5,7 +5,6 @@ int find_huiwen(char*test_word);
 int main()
 {
     char test_word[1000]={0};
-    char *test[100];
     int cnt=0;
     int j=0;
     while(scanf("%s",test_word)!=EOF){

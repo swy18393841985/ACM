@@ -10,18 +10,15 @@
     <input type="file" id="imageUpload" accept="image/*">
     <canvas id="canvas" style="display:none;"></canvas>
     <p id="result"></p>
-
     <script>
         const colorCodes = {
             'black': 0, 'brown': 1, 'red': 2, 'orange': 3,
             'yellow': 4, 'green': 5, 'blue': 6, 'violet': 7,
             'grey': 8, 'white': 9, 'silver': -2, 'gold': -1
         };
-
         document.getElementById('imageUpload').addEventListener('change', function(event) {
             const file = event.target.files[0];
             const reader = new FileReader();
-
             reader.onload = function(e) {
                 const img = new Image();
                 img.onload = function() {
@@ -30,38 +27,29 @@
                     canvas.width = img.width;
                     canvas.height = img.height;
                     ctx.drawImage(img, 0, 0);
-
                     // 这里需要添加图像处理代码来识别色环
                     // 例如：灰度化、二值化、轮廓检测等
-
                     // 假设我们已经识别出了色环颜色（这里用硬编码示例）
                     const detectedColors = ['blue', 'grey', 'red', 'gold'];
-
                     // 根据色环电阻的读数规则计算电阻值
                     let value = 0;
                     let multiplier = 1;
                     let tolerance = 10; // 默认10%
-
                     for (let i = 0; i < detectedColors.length - 1; i++) {
                         value = value * 10 + colorCodes[detectedColors[i]];
                     }
-
                     multiplier = colorCodes[detectedColors[detectedColors.length - 1]];
-
                     if (multiplier < 0) {
                         tolerance = Math.pow(10, multiplier);
                         multiplier = 1;
                     } else {
                         multiplier = Math.pow(10, multiplier);
                     }
-
                     const finalValue = value * multiplier;
                     document.getElementById('result').innerText = `图片中色环电阻的阻值为: ${finalValue}Ω ±${tolerance}%`;
                 };
-
                 img.src = e.target.result;  
             };
-
             reader.readAsDataURL(file);
         });
     </script>

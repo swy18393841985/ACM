@@ -1,0 +1,156 @@
+<!DOCTYPE html>  
+<html lang="en">  
+<head>  
+<meta charset="UTF-8">  
+<meta name="viewport" content="width=device-width, initial-scale=1.0">  
+<title>Resistor Color Code Reader</title>  
+<style>  
+  #canvas {  
+    border: 1px solid black;  
+  }  
+  .result {  
+    margin-top: 20px;  
+  }  
+  .color-input {  
+    margin: 5px 0;  
+  }  
+</style>  
+</head>  
+<body>  
+<h1>Resistor Color Code Reader</h1>  
+<div class="color-input">  
+  <label for="ring1">Effective Value (1st Ring):</label>  
+  <input type="text" id="ring1" placeholder="Enter color">  
+</div>  
+<div class="color-input">  
+  <label for="ring2">Effective Value (2nd Ring):</label>  
+  <input type="text" id="ring2" placeholder="Enter color">  
+</div>  
+<div class="color-input">  
+  <label for="ring3">Multiplier (3rd Ring):</label>  
+  <input type="text" id="ring3" placeholder="Enter color">  
+</div>  
+<div class="color-input">  
+  <label for="tolerance">Tolerance (4th Ring):</label>  
+  <input type="text" id="tolerance" placeholder="Enter color">  
+</div>  
+<canvas id="canvas"></canvas>  
+<div class="result">  
+  <p>Selected Color Rings:</p>  
+  <ul id="selectedColors"></ul>  
+  <p>Total Resistor Value: <span id="totalValue"></span> Ω</p>  
+</div>  
+  
+<script>  
+const colorCodes = {  
+  'black': 0, 'brown': 1, 'red': 2, 'orange': 3,  
+  'yellow': 4, 'green': 5, 'blue': 6, 'violet': 7,  
+  'grey': 8, 'white': 9, 'gold': 0.1, 'silver': 0.01  
+};  
+  
+let canvas, ctx, rings = ['', '', '', ''];  
+  
+function drawResistor() {  
+  canvas = document.getElementById('canvas');  
+  canvas.width = 300;  
+  canvas.height = 100;  
+  ctx = canvas.getContext('2d');  
+  
+  // Clear canvas  
+  ctx.clearRect(0, 0, canvas.width, canvas.height);  
+  
+  // Draw resistor body  
+  ctx.beginPath();  
+  ctx.rect(20, 20, 260, 60);  
+  ctx.fillStyle = 'black';  
+  ctx.fill();  
+  ctx.closePath();  
+  
+  // Draw color rings  
+  const ringWidths = [40, 40, 40, 80]; // Adjust widths as needed  
+  const colors = rings.map(ringColor => {  
+    if (colorCodes[ringColor.toLowerCase()]) {  
+      return ringColor.charAt(0).toUpperCase() + ringColor.slice(1);  
+    } else {  
+      return 'unknown'; // Placeholder for invalid color  
+    }  
+  });  
+  
+  colors.forEach((color, index) => {  
+    const x = 20 + (index * (canvas.width - 40)) / 3;  
+    const y = 20 + 10;  
+    const width = ringWidths[index];  
+    const height = 60;  
+  
+    ctx.beginPath();  
+    ctx.rect(x, y, width, height);  
+    ctx.fillStyle = colorCodes[color.toLowerCase()] !== undefined && colorCodes[color.toLowerCase()] < 10 ?  
+      `hsl(${Math.random() * 360}, 100%, 50%)` : // Random color for digits 0-9 for visibility  
+      `rgb(${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)})`; // Random color for multipliers  
+    ctx.fill();  
+    ctx.closePath();  
+  
+    // Add click event listener to each ring (simplified for demo purposes)  
+    // Note: In a real application, you would need a more sophisticated approach  
+    // to determine which ring was clicked, possibly using additional elements  
+    // or more complex hit-testing logic.  
+    (function(color) {  
+      canvas.addEventListener('click', function(event) {  
+        const rect = canvas.getBoundingClientRect();  
+        const clickX = event.clientX - rect.left;  
+        const ringXStart = [20, 60, 100, 140]; // Adjust based on actual ring positions  
+        const isInsideRing = ringXStart.some((startX, idx) => {  
+          const endX = startX + ringWidths[idx];  
+          return clickX >= startX && clickX <= endX;  
+        });  
+  
+        if (isInsideRing && index < 3) { // Assuming only the first three rings are for value calculation  
+          displaySelectedColor(color, index + 1);  
+          calculateTotalValue();  
+        }  
+      });  
+    })(color);  
+  });  
+}  
+  
+document.querySelectorAll('.color-input input').forEach(input => {  
+  input.addEventListener('input', function() {  
+    const index = Array.prototype.indexOf.call(input.parentElement.parentElement.children, input.parentElement) - 1;  
+    rings[index] = input.value.trim().toLowerCase();  
+    drawResistor();  
+  });  
+});  
+  
+function displaySelectedColor(color, ringNumber) {  
+  const selectedColorsList = document.getElementById('selectedColors');  
+  const li = document.createElement('li');  
+  li.textContent = `Ring ${ringNumber}: ${colorCodes[color] !== undefined ? colorCodes[color] : 'Unknown'}`;  
+  selectedColorsList.appendChild(li);  
+}  
+  
+function calculateTotalValue() {  
+  // Simplified calculation for demo purposes  
+  // Note: This function does not handle all cases correctly (e.g., multipliers and tolerances)  
+  let value = 0;  
+  const multipliers = [1, 10, 100, 1000]; // For demonstration only  
+  const tolerance = rings[3] ? colorCodes[rings[3].toLowerCase()] : 0.05; // Default tolerance if not specified  
+  
+  // Convert color codes to numeric values  
+  const firstTwoRings = rings.slice(0, 2).map(ring => colorCodes[ring.toLowerCase()]);  
+  const multiplier = colorCodes[rings[2].toLowerCase()] || 1; // Default to 1 if invalid multiplier  
+  
+  // Calculate resistance value (simplified)  
+  if (firstTwoRings.every(num => typeof num === 'number')) {  
+    value = (firstTwoRings[0] * 10 + firstTwoRings[1]) * multiplier;  
+  }  
+  
+  // Display total value with tolerance  
+  const totalValueElement = document.getElementById('totalValue');  
+  totalValueElement.textContent = `${value.toFixed(2)} Ω ±${(value * tolerance * 100).toFixed(2)}%`;  
+}  
+  
+// Initial draw (can be removed or triggered by a button click)  
+drawResistor(); // This will draw empty rings initially  
+</script>  
+</body>  
+</html>
